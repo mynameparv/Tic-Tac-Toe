@@ -1,0 +1,4 @@
+logger:
+  level: "DEBUG"
+console:
+  port: 7351
