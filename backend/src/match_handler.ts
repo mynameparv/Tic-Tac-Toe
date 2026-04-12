@@ -16,6 +16,8 @@ export const matchInit: nkruntime.MatchInitFunction<MatchState> = function (ctx,
     winningLine: null,
     playersJoined: 0,
     rematchRequests: {},
+    scores: {},
+    draws: 0,
   };
 
   return {
@@ -146,6 +148,15 @@ export const matchLoop: nkruntime.MatchLoopFunction<MatchState> = function (
       if (winner !== null) {
         state.winner = winner;
         state.winningLine = winningLine;
+
+        if (winner === 3) {
+          state.draws++;
+        } else {
+          const winningUserId = Object.keys(state.marks).find(id => state.marks[id] === winner);
+          if (winningUserId) {
+            state.scores[winningUserId] = (state.scores[winningUserId] || 0) + 1;
+          }
+        }
       }
     }
   }

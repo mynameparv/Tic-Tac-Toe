@@ -9,6 +9,8 @@ export interface MatchState {
   winningLine: number[] | null;
   playersJoined: number;
   rematchRequests: { [userId: string]: boolean };
+  scores: { [userId: string]: number }; // Tracks wins for each user
+  draws: number; // Tracks draws in the series
 }
 
 export const TIC_TAC_TOE_OPCODES = {

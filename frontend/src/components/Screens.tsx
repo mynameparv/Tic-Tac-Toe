@@ -56,11 +56,29 @@ export const MatchmakingScreen = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const particles = React.useMemo(() => {
+    return Array.from({ length: 12 }).map((_, i) => ({
+      left: `${Math.random() * 100}%`,
+      animationDuration: `${4 + Math.random() * 6}s`,
+      animationDelay: `${Math.random() * 4}s`,
+      fontSize: `${1.5 + Math.random()}rem`,
+      emoji: ['☁️', '🌧️', '☔', '✨', '⚡'][Math.floor(Math.random() * 5)]
+    }));
+  }, []);
+
   return (
-    <div className="container">
-      <h2>Search in Progress...</h2>
-      <div className="spinner" style={{ margin: '2rem auto' }}></div>
-      <p style={{ minHeight: '1.5rem', color: 'var(--primary-color)', fontStyle: 'italic', transition: 'opacity 0.5s' }}>{funText}</p>
+    <div className="container" style={{ position: 'relative', overflow: 'hidden', padding: '3rem 2rem' }}>
+      <div className="matchmaking-bg"></div>
+      
+      {particles.map((p, i) => (
+        <div key={i} className="weather-particle" style={{ left: p.left, animationDuration: p.animationDuration, animationDelay: p.animationDelay, fontSize: p.fontSize }}>
+          {p.emoji}
+        </div>
+      ))}
+
+      <h2 style={{ zIndex: 1, position: 'relative', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>Search in Progress...</h2>
+      <div className="spinner" style={{ margin: '2rem auto', zIndex: 1, position: 'relative', borderTopColor: 'white' }}></div>
+      <p style={{ minHeight: '1.5rem', color: 'rgba(255,255,255,0.9)', fontStyle: 'italic', transition: 'opacity 0.5s', zIndex: 1, position: 'relative' }}>{funText}</p>
     </div>
   );
 };
@@ -144,28 +162,75 @@ export const ResultScreen = () => {
 
   let message = "Match Ended";
   let color = "var(--text-main)";
+  let resultClass = "";
+  let emoji = "";
 
   if (gameState?.winner === 3) {
     message = "It's a Draw!";
     color = "#f59e0b"; // Yellow
+    resultClass = "result-draw";
+    emoji = "🤝";
   } else if (gameState?.winner === myMark) {
-    message = "You Won! 🎉";
+    message = "VICTORY!";
     color = "var(--mark-o)";
+    resultClass = "result-win";
+    emoji = "🏆";
   } else if (gameState?.winner) {
-    message = "You Lost 😢";
+    message = "DEFEAT";
     color = "var(--mark-x)";
+    resultClass = "result-lose";
+    emoji = "💀";
   }
 
   const opponentId = gameState ? Object.keys(gameState.marks).find(id => gameState.marks[id] !== myMark) : null;
   const opponentNameRaw = opponentId && gameState?.players ? gameState.players[opponentId] : 'Opponent';
   const opponentName = opponentNameRaw.split('_')[0];
 
+  const myUserId = gameState ? Object.keys(gameState.marks).find(id => gameState.marks[id] === myMark) : null;
+  const myScore = myUserId && gameState?.scores ? gameState.scores[myUserId] || 0 : 0;
+  const opponentScore = opponentId && gameState?.scores ? gameState.scores[opponentId] || 0 : 0;
+  const draws = gameState?.draws || 0;
+
   return (
-    <div className="container">
-      <h1 style={{ color, background: 'none', WebkitTextFillColor: 'initial' }}>{message}</h1>
+    <div className="container" style={{ overflow: 'hidden' }}>
       
+      {emoji && <div className="emoji-float">{emoji}</div>}
+      
+      <div 
+        className={resultClass} 
+        style={{ 
+          color, 
+          background: 'none', 
+          WebkitTextFillColor: 'initial', 
+          fontSize: '3rem', 
+          fontWeight: 900, 
+          letterSpacing: '2px', 
+          margin: '0',
+          textTransform: 'uppercase'
+        }}
+      >
+        {message}
+      </div>
+      
+      <table className="score-table">
+        <thead>
+          <tr>
+            <th>You</th>
+            <th>Draws</th>
+            <th>{opponentName}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td className={myScore > opponentScore ? 'highlight' : ''}>{myScore}</td>
+            <td style={{ color: 'var(--text-muted)' }}>{draws}</td>
+            <td className={opponentScore > myScore ? 'highlight' : ''}>{opponentScore}</td>
+          </tr>
+        </tbody>
+      </table>
+
       {matchDuration !== null && (
-        <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '1rem', fontStyle: 'italic' }}>
           Match Duration: {matchDuration} seconds
         </p>
       )}

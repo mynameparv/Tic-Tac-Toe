@@ -10,6 +10,9 @@ type GameState = {
   winner: number | null;
   playersJoined: number;
   players: { [userId: string]: string };
+  rematchRequests: { [userId: string]: boolean };
+  scores: { [userId: string]: number };
+  draws: number;
 };
 
 interface GameContextProps {
