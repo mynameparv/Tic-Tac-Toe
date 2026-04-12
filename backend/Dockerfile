@@ -9,6 +9,6 @@ RUN npm run build
 
 FROM heroiclabs/nakama:3.24.2
 
-COPY --from=builder /backend/build/*.js /nakama/data/modules/build/
+COPY --from=builder /backend/build/*.js /nakama/data/modules/
 COPY --from=builder /backend/local.yml /nakama/data/
 

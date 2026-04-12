@@ -7,8 +7,8 @@ export const client = new Client("defaultkey", "127.0.0.1", "7350", USE_SSL);
 export let session: Session | null = null;
 export let socket: Socket | null = null;
 
-export const authenticate = async (deviceId: string) => {
-  session = await client.authenticateDevice(deviceId, true);
+export const authenticate = async (deviceId: string, username?: string) => {
+  session = await client.authenticateDevice(deviceId, true, username);
   
   socket = client.createSocket(USE_SSL);
   await socket.connect(session, true);

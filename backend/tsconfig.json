@@ -1,12 +1,21 @@
 {
   "compilerOptions": {
     "target": "es5",
+    "ignoreDeprecations": "6.0",
     "module": "esnext",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "build"
+    "rootDir": "./src",
+    "outDir": "build",
+    "lib": ["es5", "es2015", "es2016"],
+    "typeRoots": [
+      "./node_modules"
+    ],
+    "types": [
+      "nakama-runtime"
+    ]
   },
   "include": ["src/**/*"]
 }

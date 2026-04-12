@@ -25,4 +25,4 @@ const InitModule: nkruntime.InitModule = function (
 };
 
 // Reference InitModule to avoid it being removed by Rollup
-!InitModule && InitModule.bind(null);
+!(InitModule as any) && (InitModule as any).bind(null);

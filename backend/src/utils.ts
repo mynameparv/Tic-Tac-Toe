@@ -12,7 +12,7 @@ export function checkWinner(board: number[]): { winner: number | null; winningLi
     }
   }
 
-  if (!board.includes(0)) {
+  if (board.indexOf(0) === -1) {
     return { winner: 3, winningLine: null }; // 3 signifies a Draw
   }
 

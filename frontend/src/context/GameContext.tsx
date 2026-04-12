@@ -36,32 +36,41 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const startMatchmaking = async () => {
     try {
       setStatus('matchmaking');
-      await authenticate(nickname || 'Guest_' + Math.floor(Math.random() * 1000));
+      let safeDeviceId = localStorage.getItem('nakama_device_id');
+      if (!safeDeviceId) {
+        safeDeviceId = (nickname || 'Guest').padEnd(10, '_') + '_' + Math.random().toString(36).substring(2, 9);
+        localStorage.setItem('nakama_device_id', safeDeviceId);
+      }
+      
+      await authenticate(safeDeviceId, nickname || 'Guest' + Math.floor(Math.random() * 1000));
+      let localSocket = socket;
+      if (!localSocket) {
+        throw new Error('Socket not initialized');
+      }
+
+      localSocket.onmatchdata = (matchData) => {
+        const state: GameState = JSON.parse(new TextDecoder().decode(matchData.data));
+        
+        if (matchData.op_code === 2 || matchData.op_code === 3) {
+          setGameState(state);
+          if (session && session.user_id && state.marks[session.user_id]) {
+            setMyMark(state.marks[session.user_id]);
+          }
+          if (state.playersJoined === 2) {
+            setStatus('playing');
+          }
+          if (state.winner !== null) {
+            setStatus('result');
+          }
+        }
+
+        if (matchData.op_code === 4) {
+          console.warn("Move rejected");
+        }
+      };
+
       const newMatch = await findOrCreateMatch();
       setMatch(newMatch);
-
-      if (socket) {
-        socket.onmatchdata = (matchData) => {
-          const state: GameState = JSON.parse(new TextDecoder().decode(matchData.data));
-          
-          if (matchData.op_code === 2 || matchData.op_code === 3) {
-            setGameState(state);
-            if (session && session.user_id && state.marks[session.user_id]) {
-              setMyMark(state.marks[session.user_id]);
-            }
-            if (state.playersJoined === 2) {
-              setStatus('playing');
-            }
-            if (state.winner !== null) {
-              setStatus('result');
-            }
-          }
-
-          if (matchData.op_code === 4) {
-            console.warn("Move rejected");
-          }
-        };
-      }
     } catch (err) {
       console.error(err);
       setError('Failed to connect to matchmaking server.');

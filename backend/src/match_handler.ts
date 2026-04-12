@@ -4,7 +4,7 @@ import { checkWinner } from './utils';
 const TICK_RATE = 5; // Ticks per second
 const MAX_EMPTY_TICKS = 300; // Timeouts if empty for 60 seconds
 
-export const matchInit: nkruntime.MatchInitFunction = function (ctx, logger, nk, params) {
+export const matchInit: nkruntime.MatchInitFunction<MatchState> = function (ctx, logger, nk, params) {
   const state: MatchState = {
     board: Array(9).fill(0),
     marks: {},
@@ -23,7 +23,7 @@ export const matchInit: nkruntime.MatchInitFunction = function (ctx, logger, nk,
   };
 };
 
-export const matchJoinAttempt: nkruntime.MatchJoinAttemptFunction = function (
+export const matchJoinAttempt: nkruntime.MatchJoinAttemptFunction<MatchState> = function (
   ctx, logger, nk, dispatcher, tick, state: MatchState, presence, metadata
 ) {
   if (state.playersJoined >= 2) {
@@ -32,7 +32,7 @@ export const matchJoinAttempt: nkruntime.MatchJoinAttemptFunction = function (
   return { state, accept: true };
 };
 
-export const matchJoin: nkruntime.MatchJoinFunction = function (
+export const matchJoin: nkruntime.MatchJoinFunction<MatchState> = function (
   ctx, logger, nk, dispatcher, tick, state: MatchState, presences
 ) {
   for (const presence of presences) {
@@ -49,7 +49,7 @@ export const matchJoin: nkruntime.MatchJoinFunction = function (
   return { state };
 };
 
-export const matchLeave: nkruntime.MatchLeaveFunction = function (
+export const matchLeave: nkruntime.MatchLeaveFunction<MatchState> = function (
   ctx, logger, nk, dispatcher, tick, state: MatchState, presences
 ) {
   for (const presence of presences) {
@@ -66,7 +66,7 @@ export const matchLeave: nkruntime.MatchLeaveFunction = function (
   return { state };
 };
 
-export const matchLoop: nkruntime.MatchLoopFunction = function (
+export const matchLoop: nkruntime.MatchLoopFunction<MatchState> = function (
   ctx, logger, nk, dispatcher, tick, state: MatchState, messages
 ) {
   if (state.playersJoined === 0) {
@@ -119,13 +119,13 @@ export const matchLoop: nkruntime.MatchLoopFunction = function (
   return { state };
 };
 
-export const matchTerminate: nkruntime.MatchTerminateFunction = function (
+export const matchTerminate: nkruntime.MatchTerminateFunction<MatchState> = function (
   ctx, logger, nk, dispatcher, tick, state, graceSeconds
 ) {
   return { state };
 };
 
-export const matchSignal: nkruntime.MatchSignalFunction = function (
+export const matchSignal: nkruntime.MatchSignalFunction<MatchState> = function (
   ctx, logger, nk, dispatcher, tick, state, data
 ) {
   return { state, data };
