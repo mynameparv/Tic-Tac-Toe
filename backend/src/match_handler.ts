@@ -9,11 +9,13 @@ export const matchInit: nkruntime.MatchInitFunction<MatchState> = function (ctx,
     board: Array(9).fill(0),
     marks: {},
     presences: {},
+    players: {},
     emptyTicks: 0,
     activeMark: 1,
     winner: null,
     winningLine: null,
     playersJoined: 0,
+    rematchRequests: {},
   };
 
   return {
@@ -37,12 +39,17 @@ export const matchJoin: nkruntime.MatchJoinFunction<MatchState> = function (
 ) {
   for (const presence of presences) {
     state.presences[presence.userId] = presence;
+    state.players[presence.userId] = presence.username;
     if (state.playersJoined === 0) {
       state.marks[presence.userId] = 1; // First player is X
     } else if (state.playersJoined === 1) {
       state.marks[presence.userId] = 2; // Second player is O
     }
     state.playersJoined++;
+  }
+
+  if (state.playersJoined >= 2) {
+    dispatcher.matchLabelUpdate(""); // Hide match from matchList
   }
 
   dispatcher.broadcastMessage(TIC_TAC_TOE_OPCODES.UPDATE, JSON.stringify(state));
@@ -54,6 +61,7 @@ export const matchLeave: nkruntime.MatchLeaveFunction<MatchState> = function (
 ) {
   for (const presence of presences) {
     delete state.presences[presence.userId];
+    delete state.rematchRequests[presence.userId];
     state.playersJoined--;
   }
 
@@ -61,6 +69,9 @@ export const matchLeave: nkruntime.MatchLeaveFunction<MatchState> = function (
   if (state.winner === null) {
     state.winner = 3; // Let's simplify and call it a draw or technical stop
     dispatcher.broadcastMessage(TIC_TAC_TOE_OPCODES.GAME_OVER, JSON.stringify(state));
+  } else {
+    // If they leave during game over screen, it means rematch is dead
+    dispatcher.broadcastMessage(TIC_TAC_TOE_OPCODES.REMATCH_REJECTED, "{}");
   }
 
   return { state };
@@ -78,9 +89,40 @@ export const matchLoop: nkruntime.MatchLoopFunction<MatchState> = function (
     state.emptyTicks = 0;
   }
 
+  // If someone left and the game is already in a completed state, destroy match.
+  if (state.winner !== null && state.playersJoined < 2) {
+    return null;
+  }
+
   let stateUpdated = false;
 
   for (const message of messages) {
+    if (message.opCode === TIC_TAC_TOE_OPCODES.GET_STATE) {
+      dispatcher.broadcastMessage(TIC_TAC_TOE_OPCODES.UPDATE, JSON.stringify(state), [message.sender]);
+      continue;
+    }
+
+    if (message.opCode === TIC_TAC_TOE_OPCODES.REMATCH_REQUEST && state.winner !== null) {
+      state.rematchRequests[message.sender.userId] = true;
+      stateUpdated = true;
+
+      // Check if both requested rematch
+      if (Object.keys(state.rematchRequests).length === 2 && state.playersJoined === 2) {
+        state.board = Array(9).fill(0);
+        state.winner = null;
+        state.winningLine = null;
+        state.rematchRequests = {};
+        state.activeMark = 1; // X always starts
+        stateUpdated = true;
+      }
+      continue;
+    }
+
+    if (message.opCode === TIC_TAC_TOE_OPCODES.REMATCH_REJECTED && state.winner !== null) {
+      dispatcher.broadcastMessage(TIC_TAC_TOE_OPCODES.REMATCH_REJECTED, "{}");
+      continue;
+    }
+
     if (message.opCode === TIC_TAC_TOE_OPCODES.MOVE && state.playersJoined === 2 && state.winner === null) {
       const data = JSON.parse(nk.binaryToString(message.data));
       const { index } = data;

@@ -37,11 +37,48 @@ export const LoginScreen = () => {
 };
 
 export const MatchmakingScreen = () => {
+  const [funText, setFunText] = React.useState('Finding a worthy opponent...');
+  const texts = [
+    'Finding a worthy opponent...',
+    'Consulting the Matchmaking Gods...',
+    'Sharpening pencils...',
+    'Polishing the digital board...',
+    'Matching skills...',
+    'Generating tic-tacs...',
+  ];
+
+  React.useEffect(() => {
+    let index = 0;
+    const interval = setInterval(() => {
+      index = (index + 1) % texts.length;
+      setFunText(texts[index]);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="container">
-      <h2>Finding Opponent...</h2>
+      <h2>Search in Progress...</h2>
       <div className="spinner" style={{ margin: '2rem auto' }}></div>
-      <p>Waiting for another player to join.</p>
+      <p style={{ minHeight: '1.5rem', color: 'var(--primary-color)', fontStyle: 'italic', transition: 'opacity 0.5s' }}>{funText}</p>
+    </div>
+  );
+};
+
+export const MatchFoundScreen = () => {
+  const { gameState, myMark } = useGame();
+  
+  const opponentId = gameState ? Object.keys(gameState.marks).find(id => gameState.marks[id] !== myMark) : null;
+  const opponentNameRaw = opponentId && gameState?.players ? gameState.players[opponentId] : 'Opponent';
+  const opponentName = opponentNameRaw.split('_')[0];
+
+  return (
+    <div className="container">
+      <h1 style={{ color: 'var(--mark-o)', animation: 'pulse 1s infinite' }}>Match Found!</h1>
+      <p style={{ fontSize: '1.2rem', marginTop: '1rem', color: 'var(--text-main)' }}>
+        Preparing table against <strong>{opponentName}</strong>...
+      </p>
+      <div style={{ marginTop: '2rem', fontSize: '3rem' }}>⚔️</div>
     </div>
   );
 };
@@ -73,8 +110,16 @@ export const BoardScreen = () => {
     );
   };
 
+  const opponentId = Object.keys(gameState.marks).find(id => gameState.marks[id] !== myMark);
+  const opponentNameRaw = opponentId && gameState.players ? gameState.players[opponentId] : 'Opponent';
+  const opponentName = opponentNameRaw.split('_')[0];
+
   return (
     <div className="container" style={{ padding: '1rem' }}>
+      <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--text-main)' }}>
+        Playing against <strong>{opponentName}</strong>
+      </h2>
+
       <div className="status-bar">
         <div>
           <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>You are: </span>
@@ -83,7 +128,7 @@ export const BoardScreen = () => {
           </strong>
         </div>
         <div style={{ fontWeight: 600, color: isMyTurn ? 'var(--primary-color)' : 'var(--text-muted)' }}>
-          {isMyTurn ? "Your Turn" : "Opponent's Turn"}
+          {isMyTurn ? "Your Turn" : `${opponentName}'s Turn`}
         </div>
       </div>
 
@@ -95,7 +140,7 @@ export const BoardScreen = () => {
 };
 
 export const ResultScreen = () => {
-  const { gameState, myMark, leaveMatch } = useGame();
+  const { gameState, myMark, leaveMatch, requestRematch, rematchState, matchDuration } = useGame();
 
   let message = "Match Ended";
   let color = "var(--text-main)";
@@ -111,12 +156,36 @@ export const ResultScreen = () => {
     color = "var(--mark-x)";
   }
 
+  const opponentId = gameState ? Object.keys(gameState.marks).find(id => gameState.marks[id] !== myMark) : null;
+  const opponentNameRaw = opponentId && gameState?.players ? gameState.players[opponentId] : 'Opponent';
+  const opponentName = opponentNameRaw.split('_')[0];
+
   return (
     <div className="container">
       <h1 style={{ color, background: 'none', WebkitTextFillColor: 'initial' }}>{message}</h1>
       
-      <button className="btn" onClick={leaveMatch} style={{ marginTop: '1rem' }}>
-        Play Again
+      {matchDuration !== null && (
+        <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
+          Match Duration: {matchDuration} seconds
+        </p>
+      )}
+
+      {rematchState === 'rejected' ? (
+        <div style={{ margin: '1rem', color: 'var(--mark-x)' }}>
+          {opponentName} has left the match.
+        </div>
+      ) : rematchState === 'requested' ? (
+        <div style={{ margin: '1rem', color: 'var(--text-muted)' }}>
+          Waiting for {opponentName} to accept rematch...
+        </div>
+      ) : (
+        <button className="btn" onClick={requestRematch} style={{ marginTop: '1rem', backgroundColor: 'var(--primary-color)' }}>
+          Play Again with {opponentName}
+        </button>
+      )}
+
+      <button className="btn" onClick={leaveMatch} style={{ marginTop: '1rem', backgroundColor: 'transparent', border: '1px solid var(--text-muted)', color: 'var(--text-muted)' }}>
+        Find New Opponent
       </button>
     </div>
   );

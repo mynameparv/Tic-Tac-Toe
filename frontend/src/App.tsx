@@ -1,5 +1,5 @@
 import { GameProvider, useGame } from './context/GameContext';
-import { LoginScreen, MatchmakingScreen, BoardScreen, ResultScreen } from './components/Screens';
+import { LoginScreen, MatchmakingScreen, BoardScreen, ResultScreen, MatchFoundScreen } from './components/Screens';
 
 const GameRouter = () => {
   const { status } = useGame();
@@ -9,6 +9,8 @@ const GameRouter = () => {
       return <LoginScreen />;
     case 'matchmaking':
       return <MatchmakingScreen />;
+    case 'match_found':
+      return <MatchFoundScreen />;
     case 'playing':
       return <BoardScreen />;
     case 'result':
